@@ -2,11 +2,9 @@
 #kafka 服务器进程退出
 https://blog.csdn.net/u013164612/article/details/80320585
 
-测试一下
 
 #kafka_hdfs
 https://www.jianshu.com/p/22b6a47b3fc9
-https://blog.csdn.net/zhuguanghalo/article/details/83478758
 https://blog.csdn.net/qq_42506914/article/details/88732246
 https://blog.csdn.net/u013385018/article/details/80689546
 #kafka_flume_hdfs
@@ -21,3 +19,9 @@ https://blog.csdn.net/qq_29281307/article/details/93720801
 https://blog.csdn.net/weixin_34162401/article/details/91702337
 https://blog.csdn.net/weixin_33976072/article/details/91669512
 https://www.cnblogs.com/listenfwind/p/8610487.html
+
+--hadoop 报错(HADOOP_HOME and hadoop.home.dir are unset)
+https://blog.csdn.net/darkdragonking/article/details/72636917
+
+--hadoop shell 命令(官网)
+https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/FileSystemShell.html

@@ -1,6 +1,5 @@
 package com.example.demo.kafka.controller;
 
-import jdk.nashorn.internal.runtime.logging.Logger;
 import lombok.extern.slf4j.Slf4j;
 
 import java.text.SimpleDateFormat;
@@ -39,6 +38,7 @@ public class OrderInfoGenerator {
     public void generate() {
 
         for(int i = 0; i <= logsNumber; i++) {
+
             log.info(randomOrderInfo());
         }
     }

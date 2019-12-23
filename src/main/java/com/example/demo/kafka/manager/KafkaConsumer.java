@@ -1,5 +1,6 @@
 package com.example.demo.kafka.manager;
 
+import com.example.demo.hadoop.HDFSTools;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -9,6 +10,7 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.Optional;
 
 /**
@@ -20,20 +22,22 @@ import java.util.Optional;
 @Component
 public class KafkaConsumer {
 
+    @Resource
+    HDFSTools hdfsTools;
+
     @KafkaListener(topics = {"testTopic"}, groupId = "receiver")
     public void consumerMsg(ConsumerRecord<?, ?> record) {
         Optional<?> kafkaMessage = Optional.ofNullable(record.value());
-
-
-        //https://blog.csdn.net/u013385018/article/details/80689546
-
-        Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
-        KafkaStream<byte[], byte[]> stream = consumerMap.get(kafkaTopic).get(0);
-        ConsumerIterator<byte[], byte[]> it = stream.iterator();
         if (kafkaMessage.isPresent()) {
             Object message = kafkaMessage.get();
             log.info("消费---------------- record =" + record);
             log.info("消费---------------- message =" + message);
+            try {
+                hdfsTools.HdfsWrite(message);
+            } catch (Exception e) {
+                log.error("数据写入HDFS异常");
+                e.printStackTrace();
+            }
         }
     }
 

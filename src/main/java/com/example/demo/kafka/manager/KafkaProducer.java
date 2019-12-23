@@ -1,5 +1,6 @@
 package com.example.demo.kafka.manager;
 
+import com.example.demo.hadoop.HDFSTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -23,7 +24,7 @@ public class KafkaProducer {
     public void sendMsg(Object msgObj) {
         //发送消息
 //        kafkaTemplate.send("test", 0, 12, "1222");
-        log.info("kafka---------------- 发送消息:{}", msgObj);
+//        log.info("kafka---------------- 发送消息:{}", msgObj);
         ListenableFuture testTopic = kafkaTemplate.send("testTopic", msgObj);
     }
 

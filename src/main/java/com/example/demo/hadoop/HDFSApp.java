@@ -1,18 +1,16 @@
 package com.example.demo.hadoop;
 
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONObject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.util.Progressable;
-import org.junit.After;
-import org.junit.Before;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @Author lyh
@@ -24,19 +22,24 @@ public class HDFSApp {
 
     public static final String HDFS_PATH = "http://39.100.62.56:8020";
     private static String hdfsUri = "hdfs://39.100.62.56:9000";
-    FileSystem fileSystem = null;
-    Configuration configuration = null;
+    static FileSystem fileSystem = null;
+    static Configuration configuration = null;
 
-    @Before
-    public void setUp() throws Exception {
+    /**
+     * 设置连接属性
+     *
+     * @throws Exception
+     */
+    public static void setUp() throws Exception {
         configuration = new Configuration();
         configuration.set("fs.defaultFS", hdfsUri);
         configuration.set("dfs.support.append", "true");
+        configuration.set("hadoop.home.dir", "E:/Download/winutils-master/hadoop-2.6.0");
         configuration.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
         configuration.set("dfs.client.block.write.replace-datanode-on-failure.enable", "true");
 
         fileSystem = FileSystem.get(new URI(HDFS_PATH), configuration, "root");
-        log.info("HDFSApp.setUp");
+        log.info("HDFSApp.setUp---------------");
     }
 
     /**
@@ -44,21 +47,28 @@ public class HDFSApp {
      *
      * @throws Exception
      */
-    public void mkdir(String hdfsDir) throws Exception {
+    public static void mkdir() throws Exception {
         //如果hdfs的对应的目录不存在，则进行创建
-        if (!fileSystem.exists(new Path("/" + hdfsDir))) {
-            fileSystem.mkdirs(new Path("/" + hdfsDir));
+        if (!fileSystem.exists(getPath())) {
+            fileSystem.mkdirs(getPath());
         }
     }
 
     /**
-     * 新建文件
+     * 新建文件写入数据
      *
      * @throws Exception
      */
-    public void create() throws Exception {
-        FSDataOutputStream output = fileSystem.create(new Path("/hdfsdat/test/a.txt"));
-        output.write("hello baby".getBytes());
+    public static void create(Object obj) throws Exception {
+
+        Path path = getPath();
+        FSDataOutputStream output = null;
+        if (fileSystem.exists(path)) {//如果存在  追加
+            output = fileSystem.append(path);
+        } else {//如果不存在  创建
+            output = fileSystem.create(path);
+        }
+        output.write(obj.toString().getBytes());
         output.flush();
         output.close();
     }
@@ -143,10 +153,31 @@ public class HDFSApp {
         fileSystem.delete(new Path("/hdfsdat/test/a.txt"), false);//第二个参数指是否递归删除
     }
 
-    @After
     public void tearDown() throws Exception {
         configuration = null;
         fileSystem = null;
         System.out.println("HDFSApp.tearDown");
+    }
+
+    public static Path getPath() {
+        long lastTime = System.currentTimeMillis();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HHmm");
+        //根据时间形成文件夹    /year/month/day    文件名  mmss
+        String dateString = sdf.format(new Date(lastTime));
+        //根据时间形成文件夹
+        String dirName = getDirFromString(dateString);
+        //根据时间形成文件名
+        String fileName = getFileNameFromString(dateString);
+        //判断文件是否存在
+        Path descPath = new Path(dirName + "/" + fileName);
+        return descPath;
+    }
+
+    public static String getDirFromString(String dateString) {
+        return "/" + dateString.split(" ")[0];
+    }
+
+    public static String getFileNameFromString(String dateString) {
+        return dateString.split(" ")[1];
     }
 }
