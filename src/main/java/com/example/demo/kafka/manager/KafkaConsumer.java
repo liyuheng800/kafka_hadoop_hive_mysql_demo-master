@@ -1,13 +1,9 @@
 package com.example.demo.kafka.manager;
 
-import com.example.demo.hadoop.HDFSTools;
+import com.example.demo.hadoop.HDFSApp;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.Acknowledgment;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -23,7 +19,7 @@ import java.util.Optional;
 public class KafkaConsumer {
 
     @Resource
-    HDFSTools hdfsTools;
+    HDFSApp hdfsApp;
 
     @KafkaListener(topics = {"testTopic"}, groupId = "receiver")
     public void consumerMsg(ConsumerRecord<?, ?> record) {
@@ -33,7 +29,7 @@ public class KafkaConsumer {
             log.info("消费---------------- record =" + record);
             log.info("消费---------------- message =" + message);
             try {
-                hdfsTools.HdfsWrite(message);
+                hdfsApp.HdfsWrite(message);
             } catch (Exception e) {
                 log.error("数据写入HDFS异常");
                 e.printStackTrace();

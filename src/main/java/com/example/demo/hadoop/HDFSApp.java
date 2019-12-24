@@ -6,6 +6,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.util.Progressable;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.*;
 import java.net.URI;
@@ -18,7 +20,18 @@ import java.util.Date;
  * @Description //TODO
  */
 @Slf4j
+@Component
 public class HDFSApp {
+
+
+    public void HdfsWrite(Object object)throws Exception{
+        if (StringUtils.isEmpty(object)){
+            throw new RuntimeException("Data cannot be null！");
+        }
+        setUp();
+        mkdir();
+        create(object);
+    }
 
     public static final String HDFS_PATH = "http://39.100.62.56:8020";
     private static String hdfsUri = "hdfs://39.100.62.56:9000";
@@ -30,7 +43,7 @@ public class HDFSApp {
      *
      * @throws Exception
      */
-    public static void setUp() throws Exception {
+    public void setUp() throws Exception {
         configuration = new Configuration();
         configuration.set("fs.defaultFS", hdfsUri);
         configuration.set("dfs.support.append", "true");
@@ -38,7 +51,7 @@ public class HDFSApp {
         configuration.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
         configuration.set("dfs.client.block.write.replace-datanode-on-failure.enable", "true");
 
-        fileSystem = FileSystem.get(new URI(HDFS_PATH), configuration, "root");
+        fileSystem = FileSystem.get(new URI(HDFS_PATH), configuration, "hadoop");
         log.info("HDFSApp.setUp---------------");
     }
 
@@ -47,10 +60,11 @@ public class HDFSApp {
      *
      * @throws Exception
      */
-    public static void mkdir() throws Exception {
+    public void mkdir() throws Exception {
+        Path path = getDirFromString();
         //如果hdfs的对应的目录不存在，则进行创建
-        if (!fileSystem.exists(getPath())) {
-            fileSystem.mkdirs(getPath());
+        if (!fileSystem.exists(path)) {
+            boolean mkdirs = fileSystem.mkdirs(path);
         }
     }
 
@@ -59,10 +73,11 @@ public class HDFSApp {
      *
      * @throws Exception
      */
-    public static void create(Object obj) throws Exception {
+    public void create(Object obj) throws Exception {
 
-        Path path = getPath();
         FSDataOutputStream output = null;
+        Path path = getFileNameFromString();
+        Path path1 = fileSystem.resolvePath(path);
         if (fileSystem.exists(path)) {//如果存在  追加
             output = fileSystem.append(path);
         } else {//如果不存在  创建
@@ -159,25 +174,33 @@ public class HDFSApp {
         System.out.println("HDFSApp.tearDown");
     }
 
-    public static Path getPath() {
+//    public Path getPath() {
+//        long lastTime = System.currentTimeMillis();
+//        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HHmm");
+//        //根据时间形成文件夹    /year/month/day    文件名  mmss
+//        String dateString = sdf.format(new Date(lastTime));
+//        //根据时间形成文件夹
+//        String dirName = getDirFromString(dateString);
+//        //根据时间形成文件名
+//        String fileName = getFileNameFromString(dateString);
+//        //判断文件是否存在
+//        Path descPath = new Path(dirName + "/" + fileName);
+//        return descPath;
+//    }
+
+    public Path getDirFromString() {
         long lastTime = System.currentTimeMillis();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HHmm");
         //根据时间形成文件夹    /year/month/day    文件名  mmss
         String dateString = sdf.format(new Date(lastTime));
-        //根据时间形成文件夹
-        String dirName = getDirFromString(dateString);
-        //根据时间形成文件名
-        String fileName = getFileNameFromString(dateString);
-        //判断文件是否存在
-        Path descPath = new Path(dirName + "/" + fileName);
-        return descPath;
+        return new Path("/" + dateString.split(" ")[0]);
     }
 
-    public static String getDirFromString(String dateString) {
-        return "/" + dateString.split(" ")[0];
-    }
-
-    public static String getFileNameFromString(String dateString) {
-        return dateString.split(" ")[1];
+    public Path getFileNameFromString() {
+        long lastTime = System.currentTimeMillis();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HHmm");
+        //根据时间形成文件夹    /year/month/day    文件名  mmss
+        String dateString = sdf.format(new Date(lastTime));
+        return new Path("/" + dateString.split(" ")[1] + ".txt");
     }
 }
