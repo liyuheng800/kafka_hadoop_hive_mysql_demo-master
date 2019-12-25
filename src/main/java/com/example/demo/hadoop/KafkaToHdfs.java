@@ -3,15 +3,13 @@ package com.example.demo.hadoop;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -32,7 +30,10 @@ public class KafkaToHdfs {
         String aaa = "hello world hello lilei hello haimeimei hello hadoop hello girl hello girl";
 
         initHadoop();
-        wirteFile(aaa);
+//        wirteFile(aaa);
+//        deleteFile();
+        upLoadFile("shangchuan.txt", null);
+//        downLoadFile("test.txt");
     }
 
     public static void initHadoop() {
@@ -42,28 +43,15 @@ public class KafkaToHdfs {
         hdfsConf = new Configuration();
         try {
             hdfsConf.set("fs.defaultFS", hdfsUri);
+            hdfsConf.set("dfs.replication", "1");
             hdfsConf.set("dfs.support.append", "true");
             hdfsConf.set("dfs.client.use.datanode.hostname", "true");
-            hdfsConf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
+//            hdfsConf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
+            hdfsConf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");    //修改属性参数
             hdfsConf.set("dfs.client.block.write.replace-datanode-on-failure.enable", "true");
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        //创建好相应的目录
-        try {
-            hadoopFS = FileSystem.get(new URI(hdfsUri), hdfsConf, hadoopUser);
-            //如果hdfs的对应的目录不存在，则进行创建
-            log.info("================= 验证目录是否存在:{}========================", hdfsDir);
-            if (!hadoopFS.exists(new Path(hdfsDir))) {
-                log.info("================= 没有此目录:{}========================", hdfsDir);
-                hadoopFS.mkdirs(new Path(hdfsDir));
-            }
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
         log.info("服务启动完毕，监听执行中");
     }
 
@@ -75,24 +63,124 @@ public class KafkaToHdfs {
     public static void wirteFile(String fileContent) {
 
         try {
+            hadoopFS = FileSystem.get(new URI(hdfsUri), hdfsConf, hadoopUser);
+            //如果hdfs的对应的目录不存在，则进行创建
+            log.info("================= 验证目录是否存在:{}========================", hdfsDir);
+            if (!hadoopFS.exists(new Path(hdfsDir))) {
+                log.info("================= 没有此目录:{}========================", hdfsDir);
+                hadoopFS.mkdirs(new Path(hdfsDir));
+            }
+
             //文件名称
             String fileName = hdfsDir + "/" + (new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime())) + ".txt";
-            Path dst = new Path(fileName);
+            Path path = new Path(fileName);
             log.info("================= 验证文件是否存在:{}========================", fileName);
-            if (!hadoopFS.exists(dst)) {
+            if (!hadoopFS.exists(path)) {
                 log.info("================= 验证文件不存在========================");
                 //创建文件
-                FSDataOutputStream output = hadoopFS.create(dst);
+                FSDataOutputStream output = hadoopFS.create(path);
                 output.close();
             }
+
             //文件追加内容
             log.info("=======================内容写入开始=======================");
             InputStream in = new ByteArrayInputStream(fileContent.getBytes("UTF-8"));
-            FSDataOutputStream out = hadoopFS.append(dst);
+            FSDataOutputStream out = hadoopFS.append(path);
             out.write(fileContent.getBytes("UTF-8"));
             out.flush();
             out.close();
             log.info("=======================内容写入结束{}=======================", fileContent);
+//            IOUtils.copyBytes(in, out, 4096, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                hadoopFS.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 文件上传
+     *
+     * @param fileName
+     * @param in
+     */
+    public static void upLoadFile(String fileName, InputStream in) {
+
+        try {
+            in = new FileInputStream("E:\\shangchuan.txt");
+
+            hadoopFS = FileSystem.get(new URI(hdfsUri), hdfsConf, hadoopUser);
+            Path path = new Path(hdfsDir + "/" + fileName);
+            // true 如果文件存在则覆盖
+            log.info("=======================内容上传开始=======================");
+//            hadoopFS.copyFromLocalFile(new Path("/Users/yangpeng/Desktop/软件包/apache-hive-1.2.2-bin.tar.gz"),new Path("/"));
+            FSDataOutputStream out = hadoopFS.create(path, true);
+            IOUtils.copyBytes(in, out, 4096, true);
+            log.info("=======================内容上传结束=======================");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                hadoopFS.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 文件下载
+     *
+     * @param fileName
+     */
+    public static void downLoadFile(String fileName) {
+
+        try {
+
+            hadoopFS = FileSystem.get(new URI(hdfsUri), hdfsConf, hadoopUser);
+            Path path = new Path(hdfsDir + "/" + fileName);
+            // true 如果文件存在则覆盖
+            log.info("======================文件下载开始=======================");
+//            hadoopFS.copyToLocalFile(path, new Path("E:\\downLoadFile.txt"));
+//            OutputStream out = new FileOutputStream("E:\\downLoadFile.txt");
+//            IOUtils.copyBytes(in, out, 4096, true);
+            log.info("=======================文件下载结束=======================");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                hadoopFS.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 文件删除
+     */
+    public static void deleteFile() {
+
+        try {
+            hadoopFS = FileSystem.get(new URI(hdfsUri), hdfsConf, hadoopUser);
+            //文件名称
+            String fileName = hdfsDir + "/shangchuan";
+            Path path = new Path(fileName);
+            log.info("================= 验证文件是否存在:{}========================", fileName);
+            if (hadoopFS.exists(path)) {
+                log.info("================= 文件删除========================");
+                boolean delete = hadoopFS.delete(path, true);
+                if (delete) {
+                    log.info("删除成功");
+                } else {
+                    log.info("删除失败");
+                }
+            }
+            log.info("=======================删除完成=======================");
 //            IOUtils.copyBytes(in, out, 4096, true);
         } catch (Exception e) {
             e.printStackTrace();
