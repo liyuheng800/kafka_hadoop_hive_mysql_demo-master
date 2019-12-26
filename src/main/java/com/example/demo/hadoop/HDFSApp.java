@@ -1,7 +1,6 @@
 package com.example.demo.hadoop;
 
 import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.JSONObject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.io.IOUtils;
