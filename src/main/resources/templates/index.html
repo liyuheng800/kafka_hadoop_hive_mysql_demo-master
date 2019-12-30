@@ -1,0 +1,197 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>HADOOP测试</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <link href="css/style.css" rel="stylesheet" type="text/css" media="all"/>
+
+</head>
+<body>
+
+<div class="main">
+    <h1>HADOOP测试</h1>
+    <div class="agileinfo_main_grid">
+        <div class="w3agile_budget divborder">
+            <h4>保存输入内容，并创建文件</h4>
+            <div class="styled-input w3_styled_input_textarea">
+                <input type="text" id="writeName" placeholder="文件名称(默认当前日期)"/>
+            </div>
+            <div class="styled-input w3_styled_input_textarea">
+                <textarea id="writeContent" placeholder="填写内容 " required=" "></textarea>
+            </div>
+            <input type="submit" value="保存" id="wirteSub"/>
+        </div>
+    </div>
+
+    <div class="agileinfo_main_grid">
+        <div class="w3agile_budget divborder">
+            <h4>文件上传</h4>
+            <div class="styled-input w3_styled_input_textarea">
+                <input id="uploadFile" style="width: 88%;" type="file" name="uploadFile"/>
+            </div>
+            <input type="submit" value="上传" id="uploadSub"/>
+        </div>
+    </div>
+
+    <div class="agileinfo_main_grid">
+        <div class="w3agile_budget divborder">
+            <h4>文件列表</h4>
+            <input type="submit" value="刷新" id="refreshSub"/>
+            <table id="hor-minimalist-a" style="width: 88%;">
+                <thead>
+                <tr>
+                    <th>文件名称</th>
+                    <th>上传时间</th>
+                    <th>文件大小</th>
+                    <th>副本个数</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="list">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="js/rangeslider.min.js"></script>
+<script type="text/javascript">
+    $(function () {
+
+        fileList();
+
+        $("#refreshSub").click(function () {
+            fileList();
+        })
+
+        $("#wirteSub").click(function () {
+            var writeName = $("#writeName").val();
+            var writeContent = $("#writeContent").val();
+            $.ajax({
+                url: '/hadoop/writeFile',
+                type: 'post',
+                dataType: 'text',
+                data: {
+                    writeName: writeName,
+                    writeContent: writeContent
+                },
+                success: function (result) {
+                    fileList();
+                    alert(result);
+                },
+                error: function () {
+                    alert("保存失败");
+                }
+            })
+        })
+
+        $("#uploadSub").click(function () {
+            // var uploadName = $("#uploadName").val();
+
+            var $file1 = $("#uploadFile").val();//用户文件内容(文件)
+            // 判断文件是否为空
+            if ($file1 == "") {
+                alert("请选择上传的目标文件! ")
+                return false;
+            }
+            //判断文件类型,我这里根据业务需求判断的是Excel文件
+            var fileName1 = $file1.substring($file1.lastIndexOf(".") + 1).toLowerCase();
+            if (fileName1 != "xls" && fileName1 != "xlsx" && fileName1 != "txt") {
+                alert("请选择Execl或txt文件!");
+                return false;
+            }
+            //判断文件大小
+            var size1 = $("input[name='uploadFile']")[0].files[0].size;
+            if (size1 > 104857600) {
+                alert("上传文件不能大于100M!");
+                return false;
+            }
+
+            var formData = new FormData();//这里需要实例化一个FormData来进行文件上传
+            formData.append("file", $("input[name='uploadFile']")[0].files[0]);
+            // formData.append("uploadName", uploadName);
+
+            $.ajax({
+                type: "post",
+                url: "/hadoop/uploadFile",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (data) {
+                    if (data == "error") {
+                        alert("文件提交失败!");
+                    } else {
+                        alert("文件上传成功!");
+                        fileList();
+                    }
+                },
+                error: function () {
+                    alert("文件提交失败!");
+                }
+            })
+        })
+
+
+        $(document).on('click', '.view', function () {
+            var fileName = $(this).attr("fileName");
+            window.open("/hadoop/openFile/" + fileName);
+        })
+
+        $(document).on('click', '.del', function () {
+            var fileName = $(this).attr("fileName");
+            $.ajax({
+                url: '/hadoop/deleteFile',
+                type: 'post',
+                dataType: 'text',
+                data: {
+                    fileName: fileName
+                },
+                success: function (result) {
+                    fileList();
+                    alert(result);
+                },
+                error: function () {
+                    alert("删除失败");
+                }
+            })
+        })
+    });
+
+    function fileList() {
+        $.ajax({
+            url: '/hadoop/listFile',
+            type: 'get',
+            dataType: 'JSON',
+            success: function (data) {
+
+                var html = "";
+                for (var i in data) {
+                    html += "<tr>\n" +
+                        "        <td>" + data[i].name + "</td>\n" +
+                        "        <td>" + data[i].date + "</td>\n" +
+                        "        <td>" + data[i].size + "B</td>\n" +
+                        "        <td>" + data[i].num + "</td>\n" +
+                        "        <td>" +
+                        "           <a href=\"javaScript:void(0);\" class='view' fileName=\"" + data[i].name + "\">查看</a>" +
+                        "           <span>|</span>" +
+                        "           <a href=\"javaScript:void(0);\" class='del' fileName=\"" + data[i].name + "\">删除</a></td>\n" +
+                        "        <td></td>\n" +
+                        "        </tr>";
+                }
+                $("#list").empty();
+                $("#list").append(html);
+            },
+            error: function () {
+                alert("获取列表失败");
+            }
+        })
+    }
+</script>
+
+<div style="text-align:center;margin:-50px 0; font:normal 14px/24px 'MicroSoft YaHei';">
+    <p>适用浏览器：360、FireFox、Chrome、Safari、Opera、傲游、搜狗、世界之窗. 不支持IE8及以下浏览器。</p>
+</div>
+</body>
+</html>
