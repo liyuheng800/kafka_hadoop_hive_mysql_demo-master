@@ -38,3 +38,7 @@ https://blog.csdn.net/beishanyingluo/article/details/102655225
 http://39.100.62.56:9870/explorer.html
 
 --本地跑代码时需要配置hadoop环境变量,文件包使用winutils-master.zip里面2.6以上的
+
+
+--demo.sh 为启动停止脚本
+参考连接：https://blog.csdn.net/u013661953/article/details/84100849
