@@ -3,7 +3,6 @@ package com.example.demo.hadoop;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.io.IOUtils;
 import org.springframework.stereotype.Component;
@@ -11,10 +10,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.net.URI;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -50,13 +50,14 @@ public class KafkaToHdfs {
 
         hdfsConf = new Configuration();
         try {
-            hdfsConf.set("fs.defaultFS", hdfsUri);
 //            hdfsConf.set("dfs.replication", "1");
 //            hdfsConf.set("dfs.support.append", "true");
-            hdfsConf.set("dfs.client.use.datanode.hostname", "true");
-//            hdfsConf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
-//            hdfsConf.set("dfs.client.block.write.replace-datanode-on-failure.enable", "true");
 //            hadoopFS = FileSystem.get(new URI(hdfsUri), hdfsConf, hadoopUser);
+
+            hdfsConf.set("fs.defaultFS", hdfsUri);
+            hdfsConf.set("dfs.client.use.datanode.hostname", "true");
+            hdfsConf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
+            hdfsConf.set("dfs.client.block.write.replace-datanode-on-failure.enable", "true");
             hadoopFS = FileSystem.get(hdfsConf);
         } catch (Exception e) {
             e.printStackTrace();
@@ -81,16 +82,16 @@ public class KafkaToHdfs {
             }
 
             //文件名称
-            fileName = StringUtils.isEmpty(fileName) ? (new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime())) : fileName;
+            fileName = StringUtils.isEmpty(fileName) ? (new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime())) + ".txt" : fileName;
             Path path = new Path(hdfsDir + "/" + fileName);
             log.info("================= 验证文件是否存在:{}========================", fileName);
             if (!hadoopFS.exists(path)) {
-                log.info("================= 验证文件不存在========================");
+                log.info("================= 文件不存在========================");
                 //创建文件
                 FSDataOutputStream output = hadoopFS.create(path);
                 output.close();
-            }else {
-                log.info("================= 验证文件存在========================");
+            } else {
+                log.info("================= 文件存在========================");
             }
 
             //文件追加内容
@@ -114,6 +115,7 @@ public class KafkaToHdfs {
 
     /**
      * 文件上传
+     *
      * @param file
      */
     public String upLoadFile(@RequestParam("file") MultipartFile file) {
@@ -226,13 +228,13 @@ public class KafkaToHdfs {
                 }
 
 
-                response.setHeader("Content-disposition", "attachment;filename="+fileName);  //客户端得到的文件名
+                response.setHeader("Content-disposition", "attachment;filename=" + fileName);  //客户端得到的文件名
                 response.setContentType("application/x-download");//设置为下载application/x-download
                 response.setContentType("text/html; charset=UTF-8");
-                response.setHeader("Cache-Control","no-cache");
-                response.setHeader("Cache-Control","no-store");
+                response.setHeader("Cache-Control", "no-cache");
+                response.setHeader("Cache-Control", "no-store");
                 response.setDateHeader("Expires", 0);
-                response.setHeader("Pragma","no-cache");
+                response.setHeader("Pragma", "no-cache");
 
                 out.flush();
                 out.close();

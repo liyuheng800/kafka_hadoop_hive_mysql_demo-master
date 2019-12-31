@@ -1,9 +1,11 @@
-package com.example.demo.kafka.controller;
+package com.example.demo.kafka.manager;
 
 import lombok.extern.slf4j.Slf4j;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -33,14 +35,17 @@ public class OrderInfoGenerator {
     float discount = 0;
     float paymentPrice = 0;
 
-    private int logsNumber = 1000;
+//    private int logsNumber = 1000;
+    private int logsNumber = 10;
 
-    public void generate() {
-
+    public List<String> generate(Integer num) {
+        ArrayList<String> list = new ArrayList<>();
+        logsNumber = num != null && num > 0 ? num : logsNumber;
         for(int i = 0; i <= logsNumber; i++) {
-
-            log.info(randomOrderInfo());
+            list.add(randomOrderInfo());
+//            log.info(randomOrderInfo());
         }
+        return list;
     }
 
     public String randomOrderInfo() {
@@ -151,6 +156,6 @@ public class OrderInfoGenerator {
     public static void main(String[] args) {
 
         OrderInfoGenerator generator = new OrderInfoGenerator();
-        generator.generate();
+        generator.generate(null);
     }
 }

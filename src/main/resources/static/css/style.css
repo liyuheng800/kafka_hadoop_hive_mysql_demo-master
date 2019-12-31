@@ -164,7 +164,7 @@ input[type="submit"],.agileits_copyright p a {
 	bottom: 4px !important;
 }
 
-.styled-input input:focus,.styled-input textarea:focus,,.styled-input select#country:focus {
+.styled-input input:focus,.styled-input textarea:focus,.styled-input select#country:focus {
 															outline: 0;
 														}
 
