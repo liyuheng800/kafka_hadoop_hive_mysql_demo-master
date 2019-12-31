@@ -34,5 +34,7 @@ http://dblab.xmu.edu.cn/blog/2022-2/
 --配置参考
 https://blog.csdn.net/beishanyingluo/article/details/102655225
 
+--hadoop 自带web页地址
+http://39.100.62.56:9870/explorer.html#/test
 
 --本地跑代码时需要配置hadoop环境变量,文件包使用winutils-master.zip里面2.6以上的
